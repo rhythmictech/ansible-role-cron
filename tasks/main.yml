@@ -1,0 +1,20 @@
+
+
+- name: add crontabs
+  cron:
+    name: "{{ item.name }}"
+    minute: "{{ item.minute|default(omit) }}"
+    hour: "{{ item.hour|default(omit) }}"
+    user: "{{ item.user }}"
+    job: "{{ item.command }}"
+    cron_file: "cron-{{ item.name }}"
+  with_items: "{{ crontabs }}"
+  tags: ['cron']
+
+- name: clean up crontabs
+  cron:
+    name: "{{ item.name }}"
+    cron_file: "cron-{{ item.name }}"
+    state: absent
+  with_items: "{{ crontabs_remove }}"
+  tags: ['cron']
