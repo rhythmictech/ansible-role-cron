@@ -42,3 +42,10 @@
   notify: systemd_reload
   tags: ['cron','systemd_timers']
 
+- name: ensure timers are enabled and started
+  systemd_service:
+    name: "{{ item.name }}-timer.timer"
+    enabled: true
+    state: started
+  with_items: "{{ systemd_timers }}"
+  tags: ['cron','systemd_timers']
