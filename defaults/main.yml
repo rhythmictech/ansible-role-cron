@@ -3,3 +3,7 @@
 crontabs: []
 
 crontabs_remove: []
+
+systemd_timers: []
+
+systemd_timers_remove: []

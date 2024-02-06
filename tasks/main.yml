@@ -18,3 +18,27 @@
     state: absent
   with_items: "{{ crontabs_remove }}"
   tags: ['cron']
+
+- name: add systemd timer service files
+  template: 
+    src: "etc.systemd.system.service.j2"
+    dest: "/etc/systemd/system/{{ item.name }}-timer.service"
+    owner: root
+    group: root
+    mode: "0740"
+  with_items: "{{ systemd_timers }}"
+  notify: systemd_reload
+  tags: ['cron','systemd_timers']
+    
+
+- name: add systemd timer files
+  template: 
+      src: "etc.systemd.system.timer.j2"
+      dest: "/etc/systemd/system/{{ item.name }}-timer.timer"
+      owner: root
+      group: root
+      mode: "0740"
+  with_items: "{{ systemd_timers }}"
+  notify: systemd_reload
+  tags: ['cron','systemd_timers']
+

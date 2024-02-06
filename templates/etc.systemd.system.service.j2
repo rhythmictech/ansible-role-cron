@@ -1,0 +1,14 @@
+[Unit]
+{% if description in item %}
+Description={{ item.description }}
+{% else %}
+Description={{ item.name }}
+{% endif %}
+Wants={{ item.name }}-timer.timer
+
+[Service]
+Type=oneshot
+ExecStart={{ item.command }}
+
+[Install]
+WantedBy=multi-user.target

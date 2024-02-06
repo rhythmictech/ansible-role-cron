@@ -1,0 +1,14 @@
+[Unit]
+{% if description in item %}
+Description={{ item.description }}
+{% else %}
+Description={{ item.name }}
+{% endif %}
+Requires={{ item.name }}-timer.service
+
+[Timer]
+Unit={{ item.name }}-timer.service
+OnCalendar={{ item.days_of_week | default("") }} {{ item.year | default("*") }}-{{ item.month | default("*") }}-{{ item.day | default("*") }} {{ item.hour | default("*") }}:{{ item.minute | default("*") }}:{{ item.second | default("00") }}
+
+[Install]
+WantedBy=timers.target
