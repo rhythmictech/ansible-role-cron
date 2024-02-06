@@ -1,5 +1,5 @@
 [Unit]
-{% if description in item %}
+{% if 'description' in item %}
 Description={{ item.description }}
 {% else %}
 Description={{ item.name }}
@@ -9,6 +9,7 @@ Wants={{ item.name }}-timer.timer
 [Service]
 Type=oneshot
 ExecStart={{ item.command }}
+User={{ item.user | default("root") }}
 
 [Install]
 WantedBy=multi-user.target
