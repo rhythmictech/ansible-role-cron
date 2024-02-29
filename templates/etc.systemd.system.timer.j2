@@ -1,5 +1,5 @@
 [Unit]
-{% if description in item %}
+{% if 'description' in item %}
 Description={{ item.description }}
 {% else %}
 Description={{ item.name }}
