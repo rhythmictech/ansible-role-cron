@@ -5,11 +5,20 @@ Description={{ item.description }}
 Description={{ item.name }}
 {% endif %}
 Wants={{ item.name }}-timer.timer
+{% for directive in item.service_unit_custom_directives | default([]) %}
+{{ directive }}
+{% endfor %}
 
 [Service]
-Type=oneshot
+Type={{ item.service_type | default("oneshot") }}
 ExecStart={{ item.command }}
 User={{ item.user | default("root") }}
+{% for var in item.envvars | default([]) %}
+Environment={{ var.name }}={{ var.value | quote }}
+{% endfor %}
+{% for directive in item.service_custom_directives | default([]) %}
+{{ directive }}
+{% endfor %}
 
 [Install]
 WantedBy=multi-user.target
