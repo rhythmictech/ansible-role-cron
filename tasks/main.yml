@@ -11,7 +11,7 @@
     user: "{{ item.user }}"
     job: "{{ item.command }}"
     cron_file: "cron-{{ item.name }}"
-  when: "{{ env in item.envs|default(['prod','ops','test','dev']) }}"
+  when: env in item.envs|default(['prod','ops','test','dev'])
   with_items: "{{ crontabs }}"
   tags: ['cron']
 
@@ -26,47 +26,49 @@
 - name: add systemd timer service files
   template: 
     src: "etc.systemd.system.service.j2"
-    dest: "/etc/systemd/system/{{ item.name }}-timer.service"
+    dest: "/etc/systemd/system/{{ item.name }}.service"
     owner: root
     group: root
     mode: "0740"
   with_items: "{{ systemd_timers }}"
-  when: "{{ env in item.envs|default(['prod','ops','test','dev']) }}"
+  when: env in item.envs|default(['prod','ops','test','dev'])
   notify: systemd reload
   tags: ['cron','systemd_timers']
 
 - name: add systemd timer files
   template: 
       src: "etc.systemd.system.timer.j2"
-      dest: "/etc/systemd/system/{{ item.name }}-timer.timer"
+      dest: "/etc/systemd/system/{{ item.name }}.timer"
       owner: root
       group: root
       mode: "0740"
   with_items: "{{ systemd_timers }}"
-  when: "{{ env in item.envs|default(['prod','ops','test','dev']) }}"
+  when: env in item.envs|default(['prod','ops','test','dev'])
   notify: systemd reload
   tags: ['cron','systemd_timers']
 
 - name: ensure timers are enabled and started
   systemd_service:
-    name: "{{ item.name }}-timer.timer"
+    name: "{{ item.name }}.timer"
     enabled: true
     state: started
   with_items: "{{ systemd_timers }}"
-  when: "{{ env in item.envs|default(['prod','ops','test','dev']) }}"
+  when: env in item.envs|default(['prod','ops','test','dev'])
+  ignore_errors: "{{ ansible_check_mode }}"
   tags: ['cron','systemd_timers']
 
 - name: ensure unwanted timers are disabled and stopped
   systemd_service:
-    name: "{{ item.name }}-timer.timer"
+    name: "{{ item.name }}.timer"
     enabled: false
     state: stopped
   with_items: "{{ systemd_timers_remove }}"
+  ignore_errors: "{{ ansible_check_mode }}"
   tags: ['cron','systemd_timers']
 
 - name: remove unwanted systemd timers
   file:
-    path: "/etc/systemd/system/{{ item.name }}-timer.timer"
+    path: "/etc/systemd/system/{{ item.name }}.timer"
     state: absent
   with_items: "{{ systemd_timers_remove }}"
   notify: systemd reload
@@ -74,7 +76,7 @@
 
 - name: remove unwanted systemd timer services
   file:
-    path: "/etc/systemd/system/{{ item.name }}-timer.service"
+    path: "/etc/systemd/system/{{ item.name }}.service"
     state: absent
   with_items: "{{ systemd_timers_remove }}"
   notify: systemd reload
