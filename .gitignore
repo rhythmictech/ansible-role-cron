@@ -1,0 +1,5 @@
+# Ansible runtime/cache
+.ansible/
+
+# Claude Code session data
+.claude/

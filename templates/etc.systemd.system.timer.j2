@@ -1,13 +1,28 @@
 [Unit]
-{% if 'description' in item %}
-Description={{ item.description }}
-{% else %}
-Description={{ item.name }}
-{% endif %}
+Description={{ item.description | default(item.name) }}
+{% for directive in item.timer_unit_custom_directives | default([]) %}
+{{ directive }}
+{% endfor %}
 
 [Timer]
 Unit={{ item.name }}.service
+{% if item.on_calendar is defined %}
+OnCalendar={{ item.on_calendar }}
+{% else %}
 OnCalendar={{ item.weekday | default("") }} {{ item.year | default("*") }}-{{ item.month | default("*") }}-{{ item.day | default("*") }} {{ item.hour | default("*") }}:{{ item.minute | default("*") }}:{{ item.second | default("00") }}
+{% endif %}
+{% if item.persistent is defined %}
+Persistent={{ item.persistent | bool | lower }}
+{% endif %}
+{% if item.randomized_delay_sec is defined %}
+RandomizedDelaySec={{ item.randomized_delay_sec }}
+{% endif %}
+{% if item.accuracy_sec is defined %}
+AccuracySec={{ item.accuracy_sec }}
+{% endif %}
+{% for directive in item.timer_custom_directives | default([]) %}
+{{ directive }}
+{% endfor %}
 
 [Install]
 WantedBy=timers.target

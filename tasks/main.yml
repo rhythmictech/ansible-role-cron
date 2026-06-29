@@ -1,83 +1,122 @@
+---
 
-
-- name: add crontabs
-  cron:
+- name: Add crontabs
+  ansible.builtin.cron:
     name: "{{ item.name }}"
-    minute: "{{ item.minute|default(omit) }}"
-    hour: "{{ item.hour|default(omit) }}"
-    day: "{{ item.day|default(omit) }}"
-    month: "{{ item.month|default(omit) }}"
-    weekday: "{{ item.weekday|default(omit) }}"
+    minute: "{{ item.minute | default(omit) }}"
+    hour: "{{ item.hour | default(omit) }}"
+    day: "{{ item.day | default(omit) }}"
+    month: "{{ item.month | default(omit) }}"
+    weekday: "{{ item.weekday | default(omit) }}"
     user: "{{ item.user }}"
     job: "{{ item.command }}"
     cron_file: "cron-{{ item.name }}"
-  when: env in item.envs|default(['prod','ops','test','dev'])
-  with_items: "{{ crontabs }}"
+  loop: "{{ crontabs }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: env in item.envs | default(cron_default_envs)
   tags: ['cron']
 
-- name: clean up crontabs
-  cron:
+# Removal runs in every environment so a job pulled from one env's vars is
+# cleaned up regardless of the env that originally created it.
+- name: Clean up crontabs
+  ansible.builtin.cron:
     name: "{{ item.name }}"
     cron_file: "cron-{{ item.name }}"
     state: absent
-  with_items: "{{ crontabs_remove }}"
+  loop: "{{ crontabs_remove }}"
+  loop_control:
+    label: "{{ item.name }}"
   tags: ['cron']
 
-- name: add systemd timer service files
-  template: 
+- name: Add systemd timer service unit files
+  ansible.builtin.template:
     src: "etc.systemd.system.service.j2"
     dest: "/etc/systemd/system/{{ item.name }}.service"
     owner: root
     group: root
-    mode: "0740"
-  with_items: "{{ systemd_timers }}"
-  when: env in item.envs|default(['prod','ops','test','dev'])
-  notify: systemd reload
-  tags: ['cron','systemd_timers']
+    mode: "0644"
+  loop: "{{ systemd_timers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: env in item.envs | default(cron_default_envs)
+  notify: Reload systemd daemon
+  tags: ['cron', 'systemd_timers']
 
-- name: add systemd timer files
-  template: 
-      src: "etc.systemd.system.timer.j2"
-      dest: "/etc/systemd/system/{{ item.name }}.timer"
-      owner: root
-      group: root
-      mode: "0740"
-  with_items: "{{ systemd_timers }}"
-  when: env in item.envs|default(['prod','ops','test','dev'])
-  notify: systemd reload
-  tags: ['cron','systemd_timers']
+- name: Add systemd timer unit files
+  ansible.builtin.template:
+    src: "etc.systemd.system.timer.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ systemd_timers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: env in item.envs | default(cron_default_envs)
+  register: cron_timer_units
+  notify: Reload systemd daemon
+  tags: ['cron', 'systemd_timers']
 
-- name: ensure timers are enabled and started
-  systemd_service:
+# Flush handlers now so the daemon-reload happens before we enable/start the
+# timers below. Otherwise systemd would not yet know about freshly written
+# units when the enable/start task runs in the same play.
+- name: Reload systemd to pick up new and changed units
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure timers are enabled and started
+  ansible.builtin.systemd_service:
     name: "{{ item.name }}.timer"
     enabled: true
     state: started
-  with_items: "{{ systemd_timers }}"
-  when: env in item.envs|default(['prod','ops','test','dev'])
+  loop: "{{ systemd_timers }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: env in item.envs | default(cron_default_envs)
   ignore_errors: "{{ ansible_check_mode }}"
-  tags: ['cron','systemd_timers']
+  tags: ['cron', 'systemd_timers']
 
-- name: ensure unwanted timers are disabled and stopped
-  systemd_service:
+# A running timer keeps its old schedule until restarted, so restart only the
+# timers whose unit file actually changed this run.
+- name: Restart timers whose unit file changed
+  ansible.builtin.systemd_service:
+    name: "{{ item.item.name }}.timer"
+    state: restarted
+  loop: "{{ cron_timer_units.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when:
+    - item.changed | default(false)
+    - not ansible_check_mode
+  tags: ['cron', 'systemd_timers']
+
+- name: Ensure unwanted timers are disabled and stopped
+  ansible.builtin.systemd_service:
     name: "{{ item.name }}.timer"
     enabled: false
     state: stopped
-  with_items: "{{ systemd_timers_remove }}"
+  loop: "{{ systemd_timers_remove }}"
+  loop_control:
+    label: "{{ item.name }}"
   ignore_errors: "{{ ansible_check_mode }}"
-  tags: ['cron','systemd_timers']
+  tags: ['cron', 'systemd_timers']
 
-- name: remove unwanted systemd timers
-  file:
+- name: Remove unwanted systemd timers
+  ansible.builtin.file:
     path: "/etc/systemd/system/{{ item.name }}.timer"
     state: absent
-  with_items: "{{ systemd_timers_remove }}"
-  notify: systemd reload
-  tags: ['cron','systemd_timers']
+  loop: "{{ systemd_timers_remove }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+  tags: ['cron', 'systemd_timers']
 
-- name: remove unwanted systemd timer services
-  file:
+- name: Remove unwanted systemd timer services
+  ansible.builtin.file:
     path: "/etc/systemd/system/{{ item.name }}.service"
     state: absent
-  with_items: "{{ systemd_timers_remove }}"
-  notify: systemd reload
-  tags: ['cron','systemd_timers']
+  loop: "{{ systemd_timers_remove }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+  tags: ['cron', 'systemd_timers']

@@ -1,14 +1,22 @@
 ---
 
 galaxy_info:
-  author: Rhythmic Operations <opsteam@rhythmictech.com>
-  description: Ansible Role for cron job management
+  role_name: cron
+  namespace: rhythmictech
+  author: Rhythmic Technologies <opensource@rhythmictech.com>
+  description: Ansible Role for cron job and systemd timer management
   company: Rhythmic Technologies, Inc.
   license: Proprietary
-  min_ansible_version: 2.0
+  min_ansible_version: "2.17"
   platforms:
-    - name: CentOS
+    - name: EL
       versions:
-        - "6"
-        - "7"
+        - "8"
+        - "9"
+        - "10"
+  galaxy_tags:
+    - cron
+    - systemd
+    - timer
+    - scheduling
 dependencies: []
