@@ -1,0 +1,127 @@
+---
+
+argument_specs:
+  main:
+    short_description: Manage cron jobs and systemd timers
+    description:
+      - Creates and removes cron jobs under /etc/cron.d and systemd timer units.
+    options:
+      env:
+        type: str
+        required: false
+        description:
+          - Name of the current environment (e.g. prod, dev, ops, test). Each
+            crontab/timer is applied only when this value is in the item's `envs`
+            list (or in C(cron_default_envs) when `envs` is omitted). Set by the
+            playbook, typically from group vars. See the README.
+      cron_default_envs:
+        type: list
+        elements: str
+        required: false
+        description:
+          - Environments an item applies to when its own `envs` list is omitted.
+      crontabs:
+        type: list
+        elements: dict
+        required: false
+        description: Cron jobs to manage under /etc/cron.d.
+        options:
+          name:
+            type: str
+            required: true
+            description: Unique name; used as the cron_file and comment marker.
+          command:
+            type: str
+            required: true
+            description: Command to run (cron `job`).
+          user:
+            type: str
+            required: true
+            description: User the job runs as.
+          minute: {type: raw, required: false}
+          hour: {type: raw, required: false}
+          day: {type: raw, required: false}
+          month: {type: raw, required: false}
+          weekday: {type: raw, required: false}
+          envs:
+            type: list
+            elements: str
+            required: false
+            description: Environments this job applies to.
+      crontabs_remove:
+        type: list
+        elements: dict
+        required: false
+        description: Cron jobs to remove.
+        options:
+          name:
+            type: str
+            required: true
+      systemd_timers:
+        type: list
+        elements: dict
+        required: false
+        description: systemd timers (and their backing services) to manage.
+        options:
+          name:
+            type: str
+            required: true
+            description: Unit name without extension; creates name.timer and name.service.
+          command:
+            type: str
+            required: true
+            description: ExecStart command for the backing service.
+          description: {type: str, required: false}
+          user: {type: str, required: false}
+          service_type: {type: str, required: false}
+          envvars:
+            type: list
+            elements: dict
+            required: false
+            description: Environment= entries for the service.
+            options:
+              name: {type: str, required: true}
+              value: {type: raw, required: true}
+          service_unit_custom_directives:
+            type: list
+            elements: str
+            required: false
+          service_custom_directives:
+            type: list
+            elements: str
+            required: false
+          timer_unit_custom_directives:
+            type: list
+            elements: str
+            required: false
+          timer_custom_directives:
+            type: list
+            elements: str
+            required: false
+          on_calendar:
+            type: str
+            required: false
+            description: Raw OnCalendar expression; overrides the component fields below.
+          weekday: {type: raw, required: false}
+          year: {type: raw, required: false}
+          month: {type: raw, required: false}
+          day: {type: raw, required: false}
+          hour: {type: raw, required: false}
+          minute: {type: raw, required: false}
+          second: {type: raw, required: false}
+          persistent: {type: bool, required: false}
+          randomized_delay_sec: {type: raw, required: false}
+          accuracy_sec: {type: raw, required: false}
+          envs:
+            type: list
+            elements: str
+            required: false
+      systemd_timers_remove:
+        type: list
+        elements: dict
+        required: false
+        description: systemd timers to remove.
+        options:
+          name:
+            type: str
+            required: true

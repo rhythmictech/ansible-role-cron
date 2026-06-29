@@ -1,5 +1,10 @@
 ---
 
+# Environments a crontab/timer applies to when its own `envs` list is omitted.
+# An item is applied only when the `env` var (set by the playbook) is in this
+# list. See the README for details on the `env` mechanism.
+cron_default_envs: ['prod', 'ops', 'test', 'dev']
+
 crontabs: []
 
 crontabs_remove: []
