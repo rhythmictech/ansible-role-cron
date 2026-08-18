@@ -1,5 +1,10 @@
 # Ansible runtime/cache
 .ansible/
+.cache/
+
+# Python
+__pycache__/
+.venv/
 
 # Claude Code session data
 .claude/
