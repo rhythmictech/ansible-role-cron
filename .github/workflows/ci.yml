@@ -42,13 +42,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # EL8 is not in the matrix: its stock Python 3.6 cannot run modules
-        # from ansible-core >= 2.17 (this role's floor), so stock EL8 images
-        # are untestable. The role still supports EL8 hosts that carry a
-        # newer Python for Ansible.
+        # Rocky stands in for all EL rebuilds (Alma, Oracle) — no separate
+        # Alma legs since they are 1:1 RHEL-compatible.
         distro:
           - rockylinux9
           - rockylinux10
+          - amazonlinux2023
+          - fedora42
+          - debian12
+          - debian13
     steps:
       - name: Check out the codebase
         uses: actions/checkout@v4

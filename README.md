@@ -12,10 +12,9 @@ environment, and jobs you no longer want can be declaratively removed.
 ## Requirements
 
 - Ansible (ansible-core) **2.17 or higher**.
-- A systemd-based EL host (EL 8 / EL 9 / EL 10) for the timer features. The
-  cron features work on any host with cron. Note that EL 8 hosts need a Python
-  newer than the stock 3.6 for ansible-core 2.17+ to manage them at all, so
-  CI covers EL 9 and EL 10 only.
+- A systemd-based host for the timer features; the cron features work on any
+  host with cron. Tested platforms: EL 9 / EL 10 (Rocky, Alma, and other RHEL
+  rebuilds), Amazon Linux 2023, Fedora, and Debian 12 / 13.
 
 The role's tasks require root; run the role with `become: true` (set it on the
 play or role include — the role does not set `become` itself).
@@ -133,7 +132,7 @@ of the environment that created it.
 ## Local Development & Testing
 
 The role is tested with [Molecule](https://ansible.readthedocs.io/projects/molecule/)
-against systemd-enabled Rocky Linux containers, and linted with
+against systemd-enabled containers for each supported platform, and linted with
 [ansible-lint](https://ansible.readthedocs.io/projects/lint/) (production
 profile). CI runs both on every pull request.
 
@@ -144,7 +143,7 @@ ansible-lint          # lint (includes yamllint)
 molecule test         # full test cycle: create, converge, idempotence, verify, destroy
 
 # Test a specific distro (default: rockylinux9)
-MOLECULE_DISTRO=rockylinux8 molecule test
+MOLECULE_DISTRO=debian13 molecule test
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.

@@ -19,7 +19,7 @@ Docker is required for Molecule tests (systemd-enabled containers).
    it against each supported platform:
 
    ```bash
-   for distro in rockylinux9 rockylinux10; do
+   for distro in rockylinux9 rockylinux10 amazonlinux2023 fedora42 debian12 debian13; do
      MOLECULE_DISTRO=$distro molecule test
    done
    ```
