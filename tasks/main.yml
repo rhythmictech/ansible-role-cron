@@ -61,8 +61,12 @@
 # Flush handlers now so the daemon-reload happens before we enable/start the
 # timers below. Otherwise systemd would not yet know about freshly written
 # units when the enable/start task runs in the same play.
+# Tagged 'always' rather than 'cron'/'systemd_timers' so the barrier still
+# holds under every tag selection, including any added later. Flushing is a
+# no-op when no handlers are pending, so it is safe to run unconditionally.
 - name: Reload systemd to pick up new and changed units
   ansible.builtin.meta: flush_handlers
+  tags: ['always']
 
 - name: Ensure timers are enabled and started
   ansible.builtin.systemd_service:
