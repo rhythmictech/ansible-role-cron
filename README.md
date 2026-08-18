@@ -1,21 +1,38 @@
-Ansible Role for cron
-=====================
+# Ansible Role: cron
+
+[![CI](https://github.com/rhythmictech/ansible-role-cron/actions/workflows/ci.yml/badge.svg)](https://github.com/rhythmictech/ansible-role-cron/actions/workflows/ci.yml)
+[![Ansible Galaxy](https://img.shields.io/badge/Ansible%20Galaxy-rhythmictech.cron-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/rhythmictech/cron/)
 
 Manages scheduled jobs on a host using either classic **cron** entries (written
 to `/etc/cron.d`) or **systemd timers** (with their backing service units).
+Jobs can be defined once in shared group vars and selectively applied per
+environment, and jobs you no longer want can be declaratively removed.
 
-Requirements
-------------
+## Requirements
 
 - Ansible (ansible-core) **2.17 or higher**.
-- A systemd-based EL host (EL 8 / EL 9 / EL 10) for the timer features. The cron
-  features work on any host with cron.
+- A systemd-based EL host (EL 8 / EL 9 / EL 10) for the timer features. The
+  cron features work on any host with cron. Note that EL 8 hosts need a Python
+  newer than the stock 3.6 for ansible-core 2.17+ to manage them at all, so
+  CI covers EL 9 and EL 10 only.
 
 The role's tasks require root; run the role with `become: true` (set it on the
 play or role include — the role does not set `become` itself).
 
-The `env` variable
-------------------
+## Installation
+
+```bash
+ansible-galaxy role install rhythmictech.cron
+```
+
+Or in a `requirements.yml`:
+
+```yaml
+roles:
+  - name: rhythmictech.cron
+```
+
+## The `env` variable
 
 Crontabs and timers are commonly defined once in shared group vars but should
 only be applied in some environments. Each item may carry an `envs` list, and
@@ -35,8 +52,7 @@ Note: removal tasks (`crontabs_remove`, `systemd_timers_remove`) are **not**
 filtered by `env` — removals always run so an item can be cleaned up regardless
 of the environment that created it.
 
-Role Variables
---------------
+## Role Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -80,8 +96,7 @@ Role Variables
 
 `<name>_remove` items only need a `name`.
 
-Example Playbook
-----------------
+## Example Playbook
 
 ```yaml
 - hosts: all
@@ -89,7 +104,7 @@ Example Playbook
   vars:
     env: prod
   roles:
-    - role: ansible-role-cron
+    - role: rhythmictech.cron
       vars:
         crontabs:
           - name: nightly-backup
@@ -113,3 +128,32 @@ Example Playbook
         systemd_timers_remove:
           - name: legacy-timer
 ```
+
+## Local Development & Testing
+
+The role is tested with [Molecule](https://ansible.readthedocs.io/projects/molecule/)
+against systemd-enabled Rocky Linux containers, and linted with
+[ansible-lint](https://ansible.readthedocs.io/projects/lint/) (production
+profile). CI runs both on every pull request.
+
+```bash
+pip install ansible-core ansible-lint molecule "molecule-plugins[docker]"
+
+ansible-lint          # lint (includes yamllint)
+molecule test         # full test cycle: create, converge, idempotence, verify, destroy
+
+# Test a specific distro (default: rockylinux9)
+MOLECULE_DISTRO=rockylinux8 molecule test
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+## License
+
+See [LICENSE](LICENSE).
+
+## About Rhythmic
+
+This role is maintained by [Rhythmic Technologies](https://www.rhythmictech.com),
+an AWS-focused managed services provider. We're always looking for good people,
+practices, and tools — issues and pull requests are welcome.
