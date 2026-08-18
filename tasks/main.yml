@@ -94,14 +94,26 @@
     - not ansible_check_mode
   tags: ['cron', 'systemd_timers']
 
-- name: Ensure unwanted timers are disabled and stopped
-  ansible.builtin.systemd_service:
-    name: "{{ item.name }}.timer"
-    enabled: false
-    state: stopped
+# systemd_service errors on units that do not exist, so a second run after the
+# unit file was removed would fail. Stop/disable only timers still present.
+- name: Check whether unwanted timer units still exist
+  ansible.builtin.stat:
+    path: "/etc/systemd/system/{{ item.name }}.timer"
   loop: "{{ systemd_timers_remove }}"
   loop_control:
     label: "{{ item.name }}"
+  register: cron_timer_remove_units
+  tags: ['cron', 'systemd_timers']
+
+- name: Ensure unwanted timers are disabled and stopped
+  ansible.builtin.systemd_service:
+    name: "{{ item.item.name }}.timer"
+    enabled: false
+    state: stopped
+  loop: "{{ cron_timer_remove_units.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.stat.exists
   ignore_errors: "{{ ansible_check_mode }}"
   tags: ['cron', 'systemd_timers']
 
