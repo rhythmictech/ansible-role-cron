@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/rhythmictech/ansible-role-cron/actions/workflows/ci.yml/badge.svg)](https://github.com/rhythmictech/ansible-role-cron/actions/workflows/ci.yml)
 [![Ansible Galaxy](https://img.shields.io/badge/Ansible%20Galaxy-rhythmictech.cron-blue.svg)](https://galaxy.ansible.com/ui/standalone/roles/rhythmictech/cron/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 Manages scheduled jobs on a host using either classic **cron** entries (written
 to `/etc/cron.d`) or **systemd timers** (with their backing service units).
@@ -150,7 +151,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## License
 
-See [LICENSE](LICENSE).
+[MIT](LICENSE).
 
 ## About Rhythmic
 
