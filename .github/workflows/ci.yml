@@ -1,0 +1,69 @@
+---
+name: CI
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    # Weekly run to catch drift against new image/tooling releases.
+    - cron: '30 4 * * 1'
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install lint dependencies
+        run: pip3 install ansible-core ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint
+
+  molecule:
+    name: "Molecule (${{ matrix.distro }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # EL8 is not in the matrix: its stock Python 3.6 cannot run modules
+        # from ansible-core >= 2.17 (this role's floor), so stock EL8 images
+        # are untestable. The role still supports EL8 hosts that carry a
+        # newer Python for Ansible.
+        distro:
+          - rockylinux9
+          - rockylinux10
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: pip3 install ansible-core molecule "molecule-plugins[docker]"
+
+      - name: Run molecule test
+        run: molecule test
+        env:
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'

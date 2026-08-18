@@ -1,0 +1,33 @@
+---
+name: Release
+
+on:  # yamllint disable-line rule:truthy
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  galaxy:
+    name: Publish to Ansible Galaxy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install ansible-core
+        run: pip3 install ansible-core
+
+      - name: Trigger Galaxy import
+        run: >-
+          ansible-galaxy role import
+          --token "${{ secrets.GALAXY_API_KEY }}"
+          --branch master
+          rhythmictech ansible-role-cron
