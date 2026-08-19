@@ -1,0 +1,71 @@
+---
+name: CI
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - master
+  schedule:
+    # Weekly run to catch drift against new image/tooling releases.
+    - cron: '30 4 * * 1'
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install lint dependencies
+        run: pip3 install ansible-core ansible-lint
+
+      - name: Run ansible-lint
+        run: ansible-lint
+
+  molecule:
+    name: "Molecule (${{ matrix.distro }})"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Rocky stands in for all EL rebuilds (Alma, Oracle) — no separate
+        # Alma legs since they are 1:1 RHEL-compatible.
+        distro:
+          - rockylinux9
+          - rockylinux10
+          - amazonlinux2023
+          - fedora42
+          - debian12
+          - debian13
+    steps:
+      - name: Check out the codebase
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: pip3 install ansible-core molecule "molecule-plugins[docker]"
+
+      - name: Run molecule test
+        run: molecule test
+        env:
+          MOLECULE_DISTRO: ${{ matrix.distro }}
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'

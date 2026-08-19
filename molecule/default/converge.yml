@@ -1,0 +1,55 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    env: test
+
+    crontabs:
+      # No `envs` -> applies via cron_default_envs.
+      - name: nightly-backup
+        user: root
+        command: /usr/local/bin/backup.sh
+        hour: "2"
+        minute: "30"
+      # Gated to prod only -> must NOT be created when env=test.
+      - name: prod-only-job
+        user: root
+        command: /usr/local/bin/prod-only.sh
+        envs: ['prod']
+
+    crontabs_remove:
+      - name: old-job
+
+    systemd_timers:
+      - name: cleanup
+        command: /usr/local/bin/cleanup.sh
+        description: Daily temp cleanup
+        on_calendar: daily
+        persistent: true
+        randomized_delay_sec: 300
+        envvars:
+          - name: CLEANUP_DIR
+            value: /var/tmp
+        timer_custom_directives:
+          - AccuracySec=1min
+      # Schedule built from component fields instead of on_calendar.
+      - name: componenty
+        command: /usr/local/bin/componenty.sh
+        user: nobody
+        service_type: oneshot
+        weekday: Mon
+        hour: "3"
+        minute: "15"
+      # Gated to prod only -> must NOT be created when env=test.
+      - name: prod-only-timer
+        command: /usr/local/bin/prod-only.sh
+        on_calendar: daily
+        envs: ['prod']
+
+    systemd_timers_remove:
+      - name: legacy-timer
+
+  tasks:
+    - name: Apply the role under test
+      ansible.builtin.include_role:
+        name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"

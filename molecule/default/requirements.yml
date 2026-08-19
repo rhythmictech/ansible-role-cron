@@ -1,0 +1,6 @@
+---
+# Collections required by the molecule docker driver, installed automatically
+# by molecule's dependency step.
+collections:
+  - name: community.docker
+  - name: ansible.posix
